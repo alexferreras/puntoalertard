@@ -20,6 +20,20 @@ export function kilometersOf(meters: number): string {
   return `${(meters / 1000).toFixed(1)} km`
 }
 
+/**
+ * Plural correcto en lugar de `reporte(s)`. La forma con paréntesis se ve
+ * descuidada y aparecía en cada tarjeta, cada tooltip y cada correo.
+ */
+export function plural(count: number, singular: string, plural?: string): string {
+  const forma = count === 1 ? singular : (plural ?? `${singular}s`)
+  return `${count} ${forma}`
+}
+
+/** Distancia legible: metros por debajo de 1 km, kilómetros por encima. */
+export function distance(meters: number): string {
+  return meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(1)} km`
+}
+
 export function percent(fraction: number): string {
   return `${Math.round(fraction * 100)}%`
 }

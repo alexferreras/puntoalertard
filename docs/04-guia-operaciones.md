@@ -893,6 +893,20 @@ validación fallida nunca borra lo que la persona escribió (el estado del formu
 | `MapLegend.tsx` / `CategoryFilter.tsx` | Leyenda de niveles y categorías; filtro con `aria-pressed`. |
 | `IncidentList.tsx` | **Alternativa textual del mapa** (§22.5): la misma información en botones enfocables, ordenada por riesgo. Un mapa Leaflet no se navega con teclado ni con lector de pantalla. |
 | `ConnectionBanner.tsx` | Estado `offline` (§18) anunciado con `role="status"`: perder la red no es visible para quien usa lector de pantalla. |
+| `ui.tsx` | Primitivas compartidas: `Card`, `SegmentedControl`, `IconBubble`, `Stat`. Existen porque cada pantalla repetía su propia combinación de borde, radio y espaciado, y la interfaz se veía distinta en cada sitio sin que nadie lo hubiera decidido. |
+
+**Decisiones de presentación que no son cosmética:**
+
+- **Control segmentado** para las elecciones excluyentes (escenario meteorológico, alcance de la
+  suscripción, frecuencia). Tres botones sueltos de anchos distintos no comunican "elige uno".
+- **Plurales reales** (`plural()` en `lib/format.ts`) en lugar de `reporte(s)`. La forma con
+  paréntesis aparecía en cada tarjeta, cada tooltip y cada correo.
+- **Etiquetas cortas** (`CATEGORY_SHORT_LABELS`) para píldoras y filtros; la completa se reserva para
+  la leyenda. Con las largas, siete píldoras formaban cuatro filas irregulares en móvil.
+- **Orden móvil explícito** con `order-*`: en una columna el mapa quedaba detrás de seis tarjetas.
+  En `/` el mapa es lo segundo tras el clima; en `/suscripciones`, lo tercero tras el alcance,
+  porque es donde se eligen las zonas. En escritorio vuelve la disposición de dos columnas.
+- **El emoji va dentro de `IconBubble`**: suelto flota con un tamaño óptico distinto al del texto.
 
 **Sincronización panel ↔ mapa.** `center` y `zoom` de `MapContainer` son **solo valores iniciales**:
 cambiarlos después no mueve el mapa. Por eso el componente `Recenter` llama a `map.setView()` cuando

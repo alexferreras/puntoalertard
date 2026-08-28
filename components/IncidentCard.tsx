@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 import { CategoryChip, ConfidenceBadge, RiskBadge, StatusBadge } from '@/components/badges'
-import { relativeTime } from '@/lib/format'
+import { plural, relativeTime } from '@/lib/format'
 import type { PublicIncident } from '@/lib/public'
 import { MAX_NOTE_CHARS, MIN_NOTE_CHARS, nextStatuses, requiresNote } from '@/lib/status'
 import { STATUS_LABELS, type ReportStatus, type RiskAssessment } from '@/lib/types'
@@ -36,8 +36,13 @@ export function IncidentCard({
 
   return (
     <li
-      className={`rounded-[var(--radius-card)] border bg-white p-4 transition ${
-        selected ? 'border-purple-700 shadow-sm' : 'border-line'
+      // El id permite que el dashboard traiga la tarjeta a la vista cuando la
+      // selección llega del mapa.
+      id={`incidente-${report.id}`}
+      className={`scroll-mt-4 rounded-[var(--radius-card)] border bg-white p-4 transition ${
+        selected
+          ? 'border-purple-700 shadow-[0_0_0_3px_rgba(83,34,117,0.12)]'
+          : 'border-line shadow-[0_1px_2px_rgba(36,23,45,0.04)]'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -64,7 +69,7 @@ export function IncidentCard({
       </div>
 
       <p className="mt-2 text-xs text-muted">
-        {relativeTime(report.createdAt)} · {recurrence} reporte(s) en la zona
+        {relativeTime(report.createdAt)} · {plural(recurrence, 'reporte')} en la zona
         {recurrence > 1 && <span className="font-medium text-gold-700"> · punto recurrente</span>}
         {report.confirmedByUser && ' · categoría confirmada por la ciudadanía'}
       </p>

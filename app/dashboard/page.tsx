@@ -16,6 +16,7 @@ import {
   type IncidentsSnapshot,
   type Role,
 } from '@/lib/client'
+import { plural } from '@/lib/format'
 import { isActive } from '@/lib/status'
 import { DEMO_CENTER } from '@/lib/geo'
 import type { PublicIncident } from '@/lib/public'
@@ -96,6 +97,19 @@ export default function DashboardPage() {
   const error = failure?.key === queryKey ? failure.message : null
   const queue = data ? priorityQueue(data) : []
   const selected = queue.find((item) => item.report.id === selectedId) ?? queue[0] ?? null
+
+  /**
+   * Seleccionar un incidente en el mapa sí marcaba su tarjeta, pero la tarjeta
+   * podía estar muy abajo en la cola y no se veía nada: parecía que el mapa no
+   * hacía nada. `block: 'nearest'` no mueve la vista si ya está visible, así que
+   * también es inocuo al pulsar la tarjeta directamente.
+   */
+  useEffect(() => {
+    if (!selectedId) return
+    document
+      .getElementById(`incidente-${selectedId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [selectedId])
 
   async function advance(report: PublicIncident, status: ReportStatus, note?: string) {
     setBusyId(report.id)
@@ -254,14 +268,22 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="h-72 overflow-hidden rounded-[var(--radius-card)] border border-line">
+          <div className="h-64 overflow-hidden rounded-[var(--radius-card)] border border-line sm:h-72">
+            {/*
+              Solo los incidentes de la cola: el mapa mostraba también los
+              cerrados y, al pulsar uno, `selectedId` apuntaba a algo que no
+              existe en la lista y la selección revertía en silencio a la primera
+              tarjeta. Parecía que el mapa no hacía nada.
+            */}
             <MapView
-              reports={data?.reports ?? []}
+              reports={queue.map((item) => item.report)}
               zones={data?.zones ?? []}
               center={
                 selected ? { lat: selected.report.lat, lng: selected.report.lng } : DEMO_CENTER
               }
-              zoom={selected ? 15 : 12}
+              // 14 en lugar de 12: por debajo de 13 el mapa agrupa y al pulsar
+              // se seleccionaba "algún" reporte de la zona, no el que se veía.
+              zoom={selected ? 16 : 14}
               selectedReportId={selected?.report.id ?? null}
               onSelectReport={(report) => setSelectedId(report.id)}
             />
@@ -283,7 +305,7 @@ export default function DashboardPage() {
                 <li key={level} className="flex items-center justify-between">
                   <span className="capitalize">{level}</span>
                   <span className="tabular-nums text-muted">
-                    {data?.zones.filter((zone) => zone.level === level).length ?? 0} zona(s)
+                    {plural(data?.zones.filter((zone) => zone.level === level).length ?? 0, 'zona')}
                   </span>
                 </li>
               ))}

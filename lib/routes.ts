@@ -5,6 +5,7 @@
 // rutas sintéticas: la demo nunca se queda sin comparación (RNF-14).
 
 import { env } from './env'
+import { plural } from './format'
 import { haversineMeters, type LatLng } from './geo'
 import { riskLevelFor, type Category, type Report, type ReportStatus, type RiskAssessment, type RiskLevel } from './types'
 
@@ -404,7 +405,11 @@ function recommendationFor(fastest: RouteOption, leastExposed: RouteOption, tooS
       ? `La ruta más rápida (${minutes(fastest.durationSeconds)} min) no pasa cerca de incidentes reportados.`
       : `No se encontró alternativa con menos exposición: la ruta de ${minutes(
           fastest.durationSeconds,
-        )} min pasa cerca de ${fastest.exposure.incidents.length} incidente(s) reportado(s).`
+        )} min pasa cerca de ${plural(
+          fastest.exposure.incidents.length,
+          'incidente reportado',
+          'incidentes reportados',
+        )}.`
   }
 
   const extra = minutes(leastExposed.durationSeconds) - minutes(fastest.durationSeconds)
@@ -417,7 +422,11 @@ function recommendationFor(fastest: RouteOption, leastExposed: RouteOption, tooS
     return `La alternativa con menos exposición tarda +${extra} min (más del 40% extra): se muestran ambas sin recomendación automática.`
   }
   return avoided > 0
-    ? `Menor exposición a incidentes reportados: +${extra} min, evitando ${avoided} punto(s) de riesgo actualmente identificados.`
+    ? `Menor exposición a incidentes reportados: +${extra} min, evitando ${plural(
+        avoided,
+        'punto de riesgo identificado',
+        'puntos de riesgo identificados',
+      )}.`
     : `Menor exposición a incidentes reportados: +${extra} min, exposición ${fastest.exposure.score} → ${leastExposed.exposure.score}.`
 }
 

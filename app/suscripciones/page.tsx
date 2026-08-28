@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 
 import { MapView } from '@/components/MapView'
 import { RiskBadge } from '@/components/badges'
+import { Card, SegmentedControl } from '@/components/ui'
 import {
   fetchIncidents,
   fetchSubscriptions,
@@ -15,8 +16,16 @@ import {
   type IncidentsSnapshot,
   type ManagedSubscription,
 } from '@/lib/client'
+import { plural } from '@/lib/format'
 import { DEMO_CENTER, type LatLng } from '@/lib/geo'
-import { CATEGORIES, CATEGORY_META, RISK_LEVELS, RISK_LEVEL_META, type Category } from '@/lib/types'
+import {
+  CATEGORIES,
+  CATEGORY_META,
+  CATEGORY_SHORT_LABELS,
+  RISK_LEVELS,
+  RISK_LEVEL_META,
+  type Category,
+} from '@/lib/types'
 import {
   DIGESTS,
   NOTIFICATION_EVENTS,
@@ -35,17 +44,8 @@ const EVENT_LABELS: Record<NotificationEvent, string> = {
 
 const DIGEST_LABELS: Record<Digest, string> = {
   inmediato: 'Al momento',
-  diario: 'Resumen diario',
-  semanal: 'Resumen semanal',
-}
-
-function Card({ children, title }: { children: React.ReactNode; title: string }) {
-  return (
-    <section className="mt-4 rounded-[var(--radius-card)] border border-line bg-white p-4">
-      <h2 className="text-sm font-semibold text-ink">{title}</h2>
-      {children}
-    </section>
-  )
+  diario: 'Diario',
+  semanal: 'Semanal',
 }
 
 function SubscriptionsContent() {
@@ -180,7 +180,7 @@ function ManageView({ token }: { token: string }) {
               <dt className="text-muted">Alcance</dt>
               <dd className="text-ink">
                 {subscription.scope === 'todas' && 'Todas las zonas'}
-                {subscription.scope === 'zonas' && `${subscription.zoneKeys.length} zona(s) elegidas`}
+                {subscription.scope === 'zonas' && `${plural(subscription.zoneKeys.length, 'zona elegida', 'zonas elegidas')}`}
                 {subscription.scope === 'radio' && `${subscription.radiusMeters} m alrededor de un punto`}
               </dd>
             </div>
@@ -320,8 +320,8 @@ function SubscribeForm({ preselectedZone }: { preselectedZone: string | null }) 
       )}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_380px]">
-        <div>
-          <Card title="Correo">
+        <div className="contents lg:block">
+          <Card title="Correo" className="order-1 lg:order-none lg:mt-4">
             <label htmlFor="email" className="mt-1 block text-xs text-muted">
               Es el único dato que guardamos.
             </label>
@@ -336,35 +336,22 @@ function SubscribeForm({ preselectedZone }: { preselectedZone: string | null }) 
             />
           </Card>
 
-          <Card title="De qué zonas">
-            <div className="mt-2 flex flex-wrap gap-2">
-              {(
-                [
-                  ['todas', 'Toda el área'],
-                  ['zonas', 'Zonas que elija'],
-                  ['radio', 'Alrededor de un punto'],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setScope(value)}
-                  aria-pressed={scope === value}
-                  className={`min-h-11 rounded-[var(--radius-control)] border px-3 text-sm font-medium ${
-                    scope === value
-                      ? 'border-purple-700 bg-purple-700 text-white'
-                      : 'border-line bg-white text-ink'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+          <Card title="De qué zonas" className="order-2 lg:order-none lg:mt-4">
+            <SegmentedControl
+              className="mt-2"
+              value={scope}
+              onChange={setScope}
+              options={[
+                { value: 'todas', label: 'Todas' },
+                { value: 'zonas', label: 'Elegir zonas' },
+                { value: 'radio', label: 'Radio' },
+              ]}
+            />
 
             {scope === 'zonas' && (
               <div className="mt-3">
                 <p className="text-xs text-muted">
-                  Pulsa los círculos del mapa para elegir zonas. {zoneKeys.length} elegida(s).
+                  Pulsa los círculos del mapa para elegir zonas. {plural(zoneKeys.length, 'elegida', 'elegidas')}.
                 </p>
                 <ul className="mt-2 flex flex-wrap gap-1.5">
                   {zoneKeys.map((key) => {
@@ -377,7 +364,7 @@ function SubscribeForm({ preselectedZone }: { preselectedZone: string | null }) 
                           className="rounded-full bg-canvas px-2.5 py-1 text-xs text-ink ring-1 ring-line"
                         >
                           {zone
-                            ? `${zone.reportIds.length} reporte(s) · ${zone.score}/100`
+                            ? `${plural(zone.reportIds.length, 'reporte')} · ${zone.score}/100`
                             : key}{' '}
                           <span aria-hidden>×</span>
                           <span className="sr-only">Quitar zona</span>
@@ -412,7 +399,7 @@ function SubscribeForm({ preselectedZone }: { preselectedZone: string | null }) 
             )}
           </Card>
 
-          <Card title="Qué avisos">
+          <Card title="Qué avisos" className="order-5 lg:order-none lg:mt-4">
             <ul className="mt-2 space-y-1.5">
               {NOTIFICATION_EVENTS.map((event) => (
                 <li key={event}>
@@ -433,7 +420,7 @@ function SubscribeForm({ preselectedZone }: { preselectedZone: string | null }) 
             )}
           </Card>
 
-          <Card title="Cuánto ruido">
+          <Card title="Cuánto ruido" className="order-6 lg:order-none lg:mt-4">
             <label htmlFor="nivel" className="mt-1 block text-xs text-muted">
               Nivel mínimo para avisarte. Por debajo de esto no molestamos.
             </label>
@@ -450,32 +437,19 @@ function SubscribeForm({ preselectedZone }: { preselectedZone: string | null }) 
               ))}
             </select>
 
-            <fieldset className="mt-3">
-              <legend className="text-xs text-muted">Frecuencia</legend>
-              <div className="mt-1 flex flex-wrap gap-2">
-                {DIGESTS.map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setDigest(value)}
-                    aria-pressed={digest === value}
-                    className={`min-h-11 rounded-[var(--radius-control)] border px-3 text-sm font-medium ${
-                      digest === value
-                        ? 'border-purple-700 bg-purple-700 text-white'
-                        : 'border-line bg-white text-ink'
-                    }`}
-                  >
-                    {DIGEST_LABELS[value]}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-1.5 text-xs text-muted">
-                Un nivel crítico se envía siempre al momento, aunque elijas resumen.
-              </p>
-            </fieldset>
+            <SegmentedControl
+              className="mt-3"
+              label="Frecuencia"
+              value={digest}
+              onChange={setDigest}
+              options={DIGESTS.map((value) => ({ value, label: DIGEST_LABELS[value] }))}
+            />
+            <p className="mt-1.5 text-xs text-muted">
+              Un nivel crítico se envía siempre al momento, aunque elijas resumen.
+            </p>
           </Card>
 
-          <Card title="Categorías (opcional)">
+          <Card title="Categorías (opcional)" className="order-7 lg:order-none lg:mt-4">
             <div className="mt-2 flex flex-wrap gap-2">
               {CATEGORIES.map((category) => (
                 <button
@@ -483,23 +457,23 @@ function SubscribeForm({ preselectedZone }: { preselectedZone: string | null }) 
                   type="button"
                   onClick={() => setCategories((prev) => toggleIn(prev, category))}
                   aria-pressed={categories.includes(category)}
-                  className={`min-h-11 rounded-[var(--radius-control)] border px-3 text-sm font-medium ${
+                  className={`min-h-9 rounded-full border px-3 text-[13px] font-medium leading-none ${
                     categories.includes(category)
                       ? 'border-purple-700 bg-purple-700 text-white'
-                      : 'border-line bg-white text-ink'
+                      : 'border-line bg-white text-ink hover:border-purple-500'
                   }`}
                 >
                   <span aria-hidden className="mr-1">
                     {CATEGORY_META[category].icon}
                   </span>
-                  {CATEGORY_META[category].label}
+                  {CATEGORY_SHORT_LABELS[category]}
                 </button>
               ))}
             </div>
             <p className="mt-2 text-xs text-muted">Sin selección, te avisamos de todas.</p>
           </Card>
 
-          <Card title="Consentimiento">
+          <Card title="Consentimiento" className="order-8 lg:order-none lg:mt-4">
             <label className="mt-1 flex items-start gap-2 text-sm text-ink">
               <input
                 type="checkbox"
@@ -516,17 +490,17 @@ function SubscribeForm({ preselectedZone }: { preselectedZone: string | null }) 
             type="button"
             disabled={!puedeEnviar || sending}
             onClick={() => void enviar()}
-            className="mt-4 min-h-11 w-full rounded-[var(--radius-control)] bg-purple-700 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="order-9 mt-4 min-h-11 w-full rounded-[var(--radius-control)] bg-purple-700 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {sending ? 'Enviando…' : 'Recibir avisos'}
           </button>
-          <p className="mt-2 text-center text-xs text-muted">
+          <p className="order-9 mt-2 text-center text-xs text-muted">
             Te enviaremos un correo para confirmar. Sin confirmar, no enviamos nada.
           </p>
         </div>
 
-        <div className="space-y-4">
-          <div className="h-[420px] overflow-hidden rounded-[var(--radius-card)] border border-line">
+        <div className="contents lg:block lg:space-y-4">
+          <div className="order-3 h-[46vh] min-h-[300px] overflow-hidden rounded-[var(--radius-card)] border border-line lg:order-none lg:h-[420px]">
             <MapView
               reports={snapshot?.reports ?? []}
               zones={snapshot?.zones ?? []}
@@ -544,7 +518,7 @@ function SubscribeForm({ preselectedZone }: { preselectedZone: string | null }) 
           </div>
 
           {snapshot && snapshot.zones.length > 0 && (
-            <section className="rounded-[var(--radius-card)] border border-line bg-white p-4">
+            <section className="order-4 rounded-[var(--radius-card)] border border-line bg-white p-4 lg:order-none">
               <h2 className="text-sm font-semibold text-ink">Zonas con mayor riesgo ahora</h2>
               <ul className="mt-2 space-y-1.5">
                 {snapshot.zones.slice(0, 4).map((zone) => {
@@ -561,7 +535,7 @@ function SubscribeForm({ preselectedZone }: { preselectedZone: string | null }) 
                         }`}
                       >
                         <span className="text-sm text-ink">
-                          {zone.reportIds.length} reporte(s) en {zone.radiusMeters} m
+                          {plural(zone.reportIds.length, 'reporte')} en {zone.radiusMeters} m
                         </span>
                         <RiskBadge level={zone.level} score={zone.score} size="sm" />
                       </button>
@@ -571,7 +545,7 @@ function SubscribeForm({ preselectedZone }: { preselectedZone: string | null }) 
               </ul>
               {scope !== 'zonas' && (
                 <p className="mt-2 text-xs text-muted">
-                  Cambia el alcance a &quot;Zonas que elija&quot; para seleccionarlas.
+                  Cambia el alcance a &quot;Elegir zonas&quot; para seleccionarlas.
                 </p>
               )}
             </section>

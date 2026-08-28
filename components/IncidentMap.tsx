@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { Circle, MapContainer, Marker, Polyline, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet'
 
 import { CategoryChip, RiskBadge, StatusBadge } from '@/components/badges'
-import { relativeTime } from '@/lib/format'
+import { plural, relativeTime } from '@/lib/format'
 import { DEMO_CENTER, DEMO_ZOOM, type LatLng } from '@/lib/geo'
 import type { PublicIncident } from '@/lib/public'
 import { CATEGORY_META, RISK_LEVEL_META, type RiskAssessment } from '@/lib/types'
@@ -209,7 +209,7 @@ export default function IncidentMap({
                 {RISK_LEVEL_META[zone.level].label}
               </strong>
               <br />
-              {zone.reportIds.length} reporte(s) en un radio de {zone.radiusMeters} m
+              {plural(zone.reportIds.length, 'reporte')} en un radio de {zone.radiusMeters} m
             </Tooltip>
           </Circle>
         )
@@ -291,8 +291,8 @@ function Markers({
                 {RISK_LEVEL_META[zone.level].label}
               </strong>
               <br />
-              {zone.reportIds.length} reporte(s) en {zone.radiusMeters} m · acerca el mapa para
-              verlos
+              {plural(zone.reportIds.length, 'reporte')} en {zone.radiusMeters} m · acerca el mapa
+              para verlos
             </Tooltip>
           </Marker>
         ))}

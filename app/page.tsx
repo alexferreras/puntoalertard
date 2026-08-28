@@ -13,7 +13,7 @@ import { WeatherBanner } from '@/components/WeatherBanner'
 import { RiskBadge } from '@/components/badges'
 import { fetchIncidents, type IncidentsSnapshot } from '@/lib/client'
 import { DEMO_CENTER, DEMO_ZOOM, type LatLng } from '@/lib/geo'
-import { relativeTime } from '@/lib/format'
+import { plural } from '@/lib/format'
 import type { Category, RiskAssessment } from '@/lib/types'
 import type { WeatherScenario } from '@/lib/weather-shared'
 
@@ -72,28 +72,28 @@ export default function MapPage() {
   return (
     <div className="mx-auto w-full max-w-[1200px] px-4 py-6">
       <section className="overflow-hidden rounded-[var(--radius-card)] bg-purple-900 text-white">
-        <div className="flex flex-col-reverse items-center gap-6 px-5 py-6 sm:flex-row sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-gold-500">
+        <div className="flex items-center gap-4 px-4 py-5 sm:px-5 sm:py-6">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-500 sm:text-sm">
               Reporta. Previene. Protege.
             </p>
-            <h1 className="mt-1.5 max-w-xl text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h1 className="mt-1 max-w-xl text-pretty text-2xl font-semibold leading-tight tracking-tight sm:mt-1.5 sm:text-4xl">
               Reporta un punto. Anticipa el riesgo.
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-white/80">
+            <p className="mt-2 max-w-2xl text-pretty text-[13px] leading-snug text-white/80 sm:text-sm">
               Los reportes ciudadanos se convierten en zonas con un nivel de riesgo/prioridad
               explicable, que se recalcula cuando cambia el pronóstico de lluvia.
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-3.5 flex gap-2 sm:mt-4">
               <Link
                 href="/reportar"
-                className="min-h-11 rounded-[var(--radius-control)] bg-gold-500 px-4 py-2.5 text-sm font-semibold text-ink transition hover:brightness-95"
+                className="flex min-h-11 flex-1 items-center justify-center rounded-[var(--radius-control)] bg-gold-500 px-3 text-center text-[13px] font-semibold text-ink transition hover:brightness-95 sm:flex-none sm:px-4 sm:text-sm"
               >
                 Reportar un punto
               </Link>
               <Link
                 href="/dashboard"
-                className="min-h-11 rounded-[var(--radius-control)] border border-white/40 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+                className="flex min-h-11 flex-1 items-center justify-center rounded-[var(--radius-control)] border border-white/40 px-3 text-center text-[13px] font-semibold text-white transition hover:bg-white/10 sm:flex-none sm:px-4 sm:text-sm"
               >
                 Ver prioridades
               </Link>
@@ -105,7 +105,9 @@ export default function MapPage() {
             width={176}
             height={176}
             priority
-            className="size-28 shrink-0 sm:size-40"
+            // Oculto en móvil: la marca ya está en la barra superior y aquí
+            // robaba el ancho que necesitan el titular y los botones.
+            className="hidden shrink-0 sm:block sm:size-32"
           />
         </div>
       </section>
@@ -122,11 +124,23 @@ export default function MapPage() {
         </p>
       )}
 
+      {/*
+        Mobile-first: en una columna el mapa iba detrás de seis tarjetas y había
+        que desplazarse para ver el producto. Con `order-*` el mapa queda segundo,
+        justo después del clima; en escritorio vuelve la disposición de dos
+        columnas y el orden deja de importar.
+      */}
       <div className="mt-4 grid gap-4 lg:grid-cols-[360px_1fr]">
-        <div className="space-y-4">
-          <WeatherBanner weather={data?.weather ?? null} scenario={scenario} onScenarioChange={setScenario} />
+        <div className="contents lg:block lg:space-y-4">
+          <div className="order-1 lg:order-none">
+            <WeatherBanner
+              weather={data?.weather ?? null}
+              scenario={scenario}
+              onScenarioChange={setScenario}
+            />
+          </div>
 
-          <dl className="grid grid-cols-3 gap-2">
+          <dl className="order-5 grid grid-cols-3 gap-2 lg:order-none">
             {[
               { label: 'Reportes', value: data?.reports.length ?? '—' },
               { label: 'Zonas', value: data?.zones.length ?? '—' },
@@ -142,10 +156,15 @@ export default function MapPage() {
             ))}
           </dl>
 
-          <CategoryFilter value={category} onChange={setCategory} />
+          <div className="order-6 lg:order-none">
+            <CategoryFilter value={category} onChange={setCategory} />
+          </div>
 
-          <section className="rounded-[var(--radius-card)] border border-line bg-white p-4">
+          <section className="order-3 rounded-[var(--radius-card)] border border-line bg-white p-4 shadow-[0_1px_2px_rgba(36,23,45,0.04)] lg:order-none">
             <h2 className="text-sm font-semibold text-ink">Zonas con mayor riesgo</h2>
+            <p className="mt-0.5 text-xs text-muted">
+              Reportes agrupados en un radio de {data?.zones[0]?.radiusMeters ?? 150} m.
+            </p>
             {loading && !data && <p className="mt-2 text-sm text-muted">Calculando riesgo…</p>}
             {data?.zones.length === 0 && (
               <p className="mt-2 text-sm text-muted">
@@ -173,11 +192,10 @@ export default function MapPage() {
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium text-ink">
-                        {z.reportIds.length} reporte(s) en un radio de {z.radiusMeters} m
+                        {plural(z.reportIds.length, 'reporte')}
                       </span>
-                      <span className="block truncate text-xs text-muted">
-                        {z.lat.toFixed(4)}, {z.lng.toFixed(4)} · actualizado{' '}
-                        {relativeTime(z.computedAt)}
+                      <span className="block truncate text-xs tabular-nums text-muted">
+                        {z.lat.toFixed(4)}, {z.lng.toFixed(4)}
                       </span>
                     </span>
                     <RiskBadge level={z.level} score={z.score} size="sm" />
@@ -187,14 +205,16 @@ export default function MapPage() {
             </ul>
           </section>
 
-          <MapLegend />
+          <div className="order-8 lg:order-none">
+            <MapLegend />
+          </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="contents lg:block lg:space-y-4">
           {error && (
             <div
               role="alert"
-              className="rounded-[var(--radius-card)] border border-risk-critico/30 bg-risk-critico/10 p-4"
+              className="order-1 rounded-[var(--radius-card)] border border-risk-critico/30 bg-risk-critico/10 p-4 lg:order-none"
             >
               <p className="text-sm font-medium text-ink">{error}</p>
               <button
@@ -207,7 +227,7 @@ export default function MapPage() {
             </div>
           )}
 
-          <div className="h-[420px] overflow-hidden rounded-[var(--radius-card)] border border-line lg:h-[560px]">
+          <div className="order-2 h-[58vh] min-h-[340px] overflow-hidden rounded-[var(--radius-card)] border border-line lg:order-none lg:h-[560px]">
             <MapView
               reports={data?.reports ?? []}
               zones={data?.zones ?? []}
@@ -223,7 +243,8 @@ export default function MapPage() {
             />
           </div>
 
-          <IncidentList
+          <div className="order-7 lg:order-none">
+            <IncidentList
             reports={data?.reports ?? []}
             zones={data?.zones ?? []}
             selectedId={selectedReport}
@@ -233,11 +254,12 @@ export default function MapPage() {
               setZoom(17)
               const owner = data?.zones.find((z) => z.reportIds.includes(report.id))
               if (owner) setSelectedZone(owner.zoneKey)
-            }}
-          />
+              }}
+            />
+          </div>
 
           {zone && (
-            <section className="rounded-[var(--radius-card)] border border-line bg-white p-4">
+            <section className="order-4 rounded-[var(--radius-card)] border border-line bg-white p-4 shadow-[0_1px_2px_rgba(36,23,45,0.04)] lg:order-none">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <h2 className="text-base font-semibold text-ink">
                   ¿Por qué esta zona tiene ese riesgo?

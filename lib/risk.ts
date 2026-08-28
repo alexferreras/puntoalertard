@@ -5,6 +5,7 @@
 // (RNF-10).
 
 import { ZONE_RADIUS_METERS, haversineMeters, zoneCenter, zoneKeyFor, type LatLng } from './geo'
+import { plural } from './format'
 import { isActive } from './status'
 import {
   riskLevelFor,
@@ -58,7 +59,7 @@ function severidadObservada(reports: Report[]): RiskFactor {
     explanation:
       open.length === 0
         ? 'Sin incidentes abiertos en el punto.'
-        : `Severidad máxima observada ${worst}/10 entre ${open.length} incidente(s) abierto(s).`,
+        : `Severidad máxima observada ${worst}/10 entre ${plural(open.length, 'incidente abierto', 'incidentes abiertos')}.`,
   }
 }
 
@@ -77,7 +78,7 @@ function recurrenciaReciente(reports: Report[], center: LatLng, now: number): Ri
     explanation:
       count === 0
         ? `Sin reportes en los últimos ${RECURRENCE_WINDOW_DAYS} días a ${NEIGHBOURHOOD_RADIUS_M} m.`
-        : `${count} reporte(s) en los últimos ${RECURRENCE_WINDOW_DAYS} días a menos de ${NEIGHBOURHOOD_RADIUS_M} m.`,
+        : `${plural(count, 'reporte')} en los últimos ${RECURRENCE_WINDOW_DAYS} días a menos de ${NEIGHBOURHOOD_RADIUS_M} m.`,
   }
 }
 
@@ -127,7 +128,7 @@ function historialPunto(reports: Report[], center: LatLng, now: number): RiskFac
     explanation:
       count === 0
         ? `Sin historial en los últimos ${HISTORY_WINDOW_DAYS} días a ${NEIGHBOURHOOD_RADIUS_M} m.`
-        : `${count} reporte(s) en ${HISTORY_WINDOW_DAYS} días a menos de ${NEIGHBOURHOOD_RADIUS_M} m, ${resolved} ya resuelto(s) y reaparecido(s).`,
+        : `${plural(count, 'reporte')} en ${HISTORY_WINDOW_DAYS} días a menos de ${NEIGHBOURHOOD_RADIUS_M} m, ${resolved} ya ${resolved === 1 ? 'resuelto y reaparecido' : 'resueltos y reaparecidos'}.`,
   }
 }
 
@@ -221,7 +222,9 @@ function summaryFor(
   reportCount: number,
   reasons: string[],
 ): string {
-  const base = `Riesgo ${score}/100 (${level}) por ${reportCount} reporte(s) agrupados en un radio de ${ZONE_RADIUS_METERS} m`
+  const base = `Riesgo ${score}/100 (${level}) por ${plural(reportCount, 'reporte')} ${
+    reportCount === 1 ? 'en' : 'agrupados en'
+  } un radio de ${ZONE_RADIUS_METERS} m`
   return reasons.length === 0
     ? `${base}, sin factores agravantes activos.`
     : `${base}. Factor dominante: ${reasons[0].toLowerCase()}.`

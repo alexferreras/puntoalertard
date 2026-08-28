@@ -22,6 +22,19 @@ export const CATEGORY_META: Record<Category, { label: string; icon: string }> = 
   otro: { label: 'Otra condición', icon: '❓' },
 }
 
+/**
+ * Etiqueta breve para píldoras y filtros. La larga no cabe en móvil y forzaba
+ * filas irregulares; la completa sigue en `CATEGORY_META` para leyendas y textos.
+ */
+export const CATEGORY_SHORT_LABELS: Record<Category, string> = {
+  basura: 'Residuos',
+  drenaje_obstruido: 'Drenaje',
+  inundacion: 'Agua',
+  quema: 'Quema',
+  via_bloqueada: 'Vía',
+  otro: 'Otra',
+}
+
 // RF-15 y §16 — ciclo de vida del reporte. El orden es lógico, pero las
 // transiciones válidas están en `lib/status.ts`: el grafo no es lineal.
 export const STATUSES = [

@@ -7,7 +7,7 @@ import { MapView, type MapRouteInput } from '@/components/MapView'
 import { RiskBadge } from '@/components/badges'
 import { WeatherBanner } from '@/components/WeatherBanner'
 import { compareRoutes, fetchIncidents, type IncidentsSnapshot } from '@/lib/client'
-import { kilometersOf, minutesOf } from '@/lib/format'
+import { kilometersOf, minutesOf, plural } from '@/lib/format'
 import { DEMO_CENTER, type LatLng } from '@/lib/geo'
 import type { RouteComparison, VerificationLevel } from '@/lib/routes'
 import { CATEGORY_META } from '@/lib/types'
@@ -228,7 +228,7 @@ function RoutesContent() {
                       Exposición <span className="font-semibold tabular-nums">{option.exposure.score}</span>/100
                       {option.exposure.criticalCount > 0 && (
                         <span className="text-risk-critico">
-                          {' '}· {option.exposure.criticalCount} zona(s) crítica(s)
+                          {' '}· {plural(option.exposure.criticalCount, 'zona crítica', 'zonas críticas')}
                         </span>
                       )}
                     </p>
