@@ -1,4 +1,4 @@
-// Motor de notificaciones (docs/05). Decide **a quién** hay que avisar y **si
+// Motor de notificaciones (cambio para forzar reconstrucción) (docs/05). Decide **a quién** hay que avisar y **si
 // toca avisar ahora**; el envío lo hace un `EmailProvider` sustituible.
 //
 // Las funciones de decisión son puras para poder fijar en tests las reglas que

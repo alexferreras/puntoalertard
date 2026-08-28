@@ -1,0 +1,39 @@
+# Desarrollo y pruebas locales de la imagen de producción.
+#
+#   docker compose up --build
+#   → http://localhost:8090
+#
+# Para desarrollo con recarga en caliente usa `npm run dev`, no esto: esta imagen
+# sirve el build de producción.
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      # Valores de prueba: en producción se configuran en la UI del panel.
+      PUNTOALERTA_OPERATOR_CODE: ${PUNTOALERTA_OPERATOR_CODE:-operador-local-2026}
+      PUNTOALERTA_SESSION_SECRET: ${PUNTOALERTA_SESSION_SECRET:-secreto-local-solo-para-pruebas}
+      # Con DEMO_MODE=true la primera visita siembra los 18 reportes de la demo.
+      DEMO_MODE: ${DEMO_MODE:-true}
+      PUNTOALERTA_VISION_ENGINE: ${PUNTOALERTA_VISION_ENGINE:-auto}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      PUNTOALERTA_BASE_URL: ${PUNTOALERTA_BASE_URL:-http://localhost:8090}
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      # La base SQLite, la evidencia y los respaldos. Sin esto, cada
+      # `docker compose up --build` empezaría de cero.
+      - puntoalerta_data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8090/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  puntoalerta_data:

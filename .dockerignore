@@ -1,0 +1,27 @@
+# Todo lo que no debe entrar en el contexto de build.
+node_modules
+.next
+.git
+.gitignore
+
+# Datos locales: la base y la evidencia viven en un volumen, nunca en la imagen.
+data
+
+# Documentación y fuentes: no hacen falta en tiempo de ejecución.
+docs
+README.md
+AGENTS.md
+CLAUDE.md
+
+# Entorno y herramientas locales
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea
+.vscode
+
+# Tests y comprobaciones: la imagen es de ejecución, no de CI.
+tests
+scripts
+vitest.config.mts

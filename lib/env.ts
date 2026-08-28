@@ -71,8 +71,22 @@ function assertProductionReady(env: z.infer<typeof schema>): string[] {
   return problemas
 }
 
+/**
+ * Docker Compose y los paneles de despliegue pasan **cadena vacía** para las
+ * variables opcionales sin valor (`FOO: ${FOO:-}`), no las omiten. Una cadena
+ * vacía no es "sin valor" para zod, así que sin esta limpieza el contenedor no
+ * arranca por una API key que nadie configuró.
+ */
+function withoutEmptyValues(source: NodeJS.ProcessEnv): Record<string, string> {
+  const clean: Record<string, string> = {}
+  for (const [key, value] of Object.entries(source)) {
+    if (typeof value === 'string' && value.trim() !== '') clean[key] = value
+  }
+  return clean
+}
+
 function load() {
-  const parsed = schema.safeParse(process.env)
+  const parsed = schema.safeParse(withoutEmptyValues(process.env))
   if (!parsed.success) {
     const detail = parsed.error.issues
       .map((issue) => `  ${issue.path.join('.') || '(raíz)'}: ${issue.message}`)

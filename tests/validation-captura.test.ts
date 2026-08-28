@@ -52,3 +52,21 @@ describe('Sesión anónima (§8, §19)', () => {
     expect(hashSessionId(uuid)).not.toBe(hashSessionId('3f2504e0-4f89-11d3-9a0c-0305e82c3302'))
   })
 })
+
+describe('Configuración desde el entorno', () => {
+  it('trata la cadena vacía como ausencia de valor', async () => {
+    // Compose y los paneles pasan `VAR: ""` cuando la variable no se configura.
+    // Sin limpiarlas, el contenedor no arranca por una API key vacía.
+    const original = { ...process.env }
+    try {
+      process.env.ANTHROPIC_API_KEY = ''
+      process.env.PUNTOALERTA_OSRM_URL = '   '
+      // Importación dinámica con caché invalidada: env se evalúa al importar.
+      const mod = await import(`@/lib/env?empty=${Date.now()}`)
+      expect(mod.env.ANTHROPIC_API_KEY).toBeUndefined()
+      expect(mod.env.PUNTOALERTA_OSRM_URL).toBe('https://router.project-osrm.org')
+    } finally {
+      process.env = original
+    }
+  })
+})

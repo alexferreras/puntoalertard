@@ -36,7 +36,8 @@ configuración inválida falla de inmediato con un mensaje concreto en vez de de
 | `PUNTOALERTA_OSRM_URL` | OSRM público | Servidor de rutas alternativo. |
 | `PUNTOALERTA_DB_FILE` | `puntoalertard.db` | Nombre del fichero SQLite dentro de `data/`. |
 | `PUNTOALERTA_OPERATOR_CODE` | `operador-demo` | Código de acceso del dashboard de operador. |
-| `PUNTOALERTA_SESSION_SECRET` | efímero | Secreto de firma de sesiones. Sin él, las sesiones mueren al reiniciar. |
+| `PUNTOALERTA_SESSION_SECRET` | efímero | Secreto de firma de sesiones y tokens. **Obligatorio en producción.** |
+| `PUNTOALERTA_BASE_URL` | `http://localhost:3000` | Dominio público, para los enlaces de los avisos por correo. |
 | `DEMO_MODE` | `true` | Habilita escenarios simulados y el endpoint de seed. |
 
 ## Pantallas
@@ -78,11 +79,25 @@ poder demostrar el recálculo de riesgo en vivo.
 
 Errores con formato estable: `{ error: { code, message, fieldErrors, requestId } }`.
 
+## Despliegue
+
+```bash
+docker compose up -d --build     # http://localhost:8090
+```
+
+Producción con EasyPanel/VPS: `docker-compose.prod.yml`, puerto interno **8090**,
+volumen `puntoalerta_data` en `/app/data` (base SQLite + evidencia + respaldos).
+El contenedor valida la configuración y aplica migraciones **antes** de aceptar
+peticiones, con respaldo previo del fichero de base de datos.
+
+Guía completa, variables y checklist: `docs/06-despliegue.md`.
+
 ## Documentación
 
 | Documento | Para qué |
 |---|---|
 | `docs/04-guia-operaciones.md` | Guía explicativa de cada operación tal como está implementada: recorrido por el código, umbrales, cómo se toman las decisiones (§7b), qué pasa si falla y cómo probarla. |
+| `docs/06-despliegue.md` | Despliegue en EasyPanel/VPS: variables, qué pasa al arrancar, por qué un redespliegue no pierde datos y checklist. |
 | `docs/05-notificaciones-y-suscripciones.md` | Suscripciones por correo e integración institucional: diseño, permisos para cambiar estado y mock demostrable. Especificado, no implementado. |
 | `docs/03-auditoria-brechas.md` | Backlog vivo de brechas frente a los estándares. |
 | `docs/01-estandares-plataforma.md` | Visión, usuarios, gobernanza e identidad. |

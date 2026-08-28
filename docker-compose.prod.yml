@@ -1,0 +1,88 @@
+# Production Docker Compose — EasyPanel / VPS
+#
+# Deploy en EasyPanel:
+#   1. New Project → "From Compose" → apunta a este repo
+#   2. Selecciona este archivo (docker-compose.prod.yml) como compose file
+#   3. Configura las variables en EasyPanel → Environment (ver lista abajo)
+#   4. En EasyPanel → Domains: apunta tu dominio al servicio "app" puerto 8090
+#   5. Copia el dominio asignado y ponlo como PUNTOALERTA_BASE_URL
+#   6. Deploy — EasyPanel corre: build → migraciones → servidor
+#
+# Nota de puertos:
+#   La app corre internamente en el 8090. En este VPS ya están ocupados el 3000
+#   (EasyPanel), 8088 (finance-bot), 8000, 5001, 5433, 5678, 9000, 18080 y 1337.
+#   EasyPanel accede por la red Docker interna — NO hace falta exponer el puerto
+#   al host. El tráfico externo entra por 80/443 a través de su proxy Traefik.
+#
+# Variables requeridas (configurar en EasyPanel UI, NUNCA en un .env commiteado):
+#   PUNTOALERTA_OPERATOR_CODE   código de acceso del dashboard
+#   PUNTOALERTA_SESSION_SECRET  firma de sesiones y tokens (>=16 caracteres)
+#   PUNTOALERTA_BASE_URL        dominio público https, para los enlaces de correo
+#
+# El arranque falla a propósito si falta alguna de las dos primeras: es preferible
+# un despliegue que no levanta a uno que levanta con el dashboard abierto.
+#
+# Sobre la persistencia:
+#   No hay servicio de base de datos separado. La base es un fichero SQLite
+#   dentro del volumen `puntoalerta_data`, junto con la evidencia fotográfica y
+#   los respaldos automáticos previos a cada migración. **Ese volumen es el dato
+#   entero del sistema**: mientras EasyPanel lo conserve entre despliegues, un
+#   redespliegue no pierde nada. Si algún día se recrea el volumen, se empieza de
+#   cero — de ahí que los respaldos vivan dentro de él y convenga sacarlos fuera
+#   periódicamente (ver docs/06-despliegue.md).
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+
+    environment:
+      # ── Requeridas ───────────────────────────────────────────────────────
+      PUNTOALERTA_OPERATOR_CODE: ${PUNTOALERTA_OPERATOR_CODE}
+      PUNTOALERTA_SESSION_SECRET: ${PUNTOALERTA_SESSION_SECRET}
+      PUNTOALERTA_BASE_URL: ${PUNTOALERTA_BASE_URL}
+
+      # ── Modo de operación ────────────────────────────────────────────────
+      # false en un despliegue real: desactiva los escenarios meteorológicos
+      # simulados, exige rol para recargar datos y no siembra la demo.
+      DEMO_MODE: ${DEMO_MODE:-false}
+
+      # ── Clasificador de evidencia ────────────────────────────────────────
+      # `auto` usa Claude si hay API key y el motor mock si no. `mock` fuerza el
+      # offline; `claude` exige la clave y falla al arrancar sin ella.
+      PUNTOALERTA_VISION_ENGINE: ${PUNTOALERTA_VISION_ENGINE:-auto}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+
+      # ── Fuentes externas ─────────────────────────────────────────────────
+      PUNTOALERTA_WEATHER_PROVIDER: ${PUNTOALERTA_WEATHER_PROVIDER:-open_meteo}
+      PUNTOALERTA_OSRM_URL: ${PUNTOALERTA_OSRM_URL:-https://router.project-osrm.org}
+
+      # ── Base de datos ────────────────────────────────────────────────────
+      # Solo el nombre del fichero; el directorio es el volumen montado.
+      PUNTOALERTA_DB_FILE: ${PUNTOALERTA_DB_FILE:-puntoalertard.db}
+
+    volumes:
+      # Base SQLite + evidencia + respaldos. No borrar entre despliegues.
+      - puntoalerta_data:/app/data
+
+    expose:
+      - "8090"   # Solo visible en la red Docker; Traefik lo usa internamente
+
+    healthcheck:
+      # Comprueba que la base sea legible, no solo que el proceso viva: una
+      # migración a medias deja el proceso arriba y la app inservible.
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8090/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+    logging:
+      # Sin límite, los logs de un contenedor de larga vida llenan el disco.
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  puntoalerta_data:
