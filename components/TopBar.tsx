@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
+import { CurrentSection } from '@/components/CurrentSection'
+
 const LINKS = [
   { href: '/', label: 'Mapa' },
   { href: '/reportar', label: 'Reportar' },
@@ -27,6 +29,8 @@ export function TopBar() {
             PuntoAlerta<span className="text-gold-500">RD</span>
           </span>
         </Link>
+
+        <CurrentSection />
 
         {/*
           Los cinco enlaces no caben en una línea junto a la marca en un móvil:

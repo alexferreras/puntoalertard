@@ -130,7 +130,7 @@ export default function MapPage() {
         justo después del clima; en escritorio vuelve la disposición de dos
         columnas y el orden deja de importar.
       */}
-      <div className="mt-4 grid gap-4 lg:grid-cols-[360px_1fr]">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[360px_1fr]">
         <div className="contents lg:block lg:space-y-4">
           <div className="order-1 lg:order-none">
             <WeatherBanner

@@ -241,7 +241,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_380px]">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[1fr_380px]">
         <div>
           <WeatherBanner weather={data?.weather ?? null} scenario={scenario} onScenarioChange={setScenario} />
           {!data && <p className="mt-4 text-sm text-muted">Cargando cola de incidentes…</p>}

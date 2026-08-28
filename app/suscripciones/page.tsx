@@ -319,7 +319,7 @@ function SubscribeForm({ preselectedZone }: { preselectedZone: string | null }) 
         </p>
       )}
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_380px]">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[1fr_380px]">
         <div className="contents lg:block">
           <Card title="Correo" className="order-1 lg:order-none lg:mt-4">
             <label htmlFor="email" className="mt-1 block text-xs text-muted">

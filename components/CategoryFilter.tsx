@@ -35,7 +35,10 @@ export function CategoryFilter({
   onChange: (next: Category | null) => void
 }) {
   return (
-    <fieldset className="rounded-[var(--radius-card)] border border-line bg-white p-4 shadow-[0_1px_2px_rgba(36,23,45,0.04)]">
+    // `min-w-0`: la hoja de estilos del navegador le da a `fieldset`
+    // `min-inline-size: min-content`, así que se negaba a encogerse por debajo de
+    // la suma de todas las píldoras (~600 px) y desbordaba la página entera.
+    <fieldset className="min-w-0 rounded-[var(--radius-card)] border border-line bg-white p-4 shadow-[0_1px_2px_rgba(36,23,45,0.04)]">
       <legend className="text-sm font-semibold text-ink">Filtrar por categoría</legend>
       {/*
         Con etiquetas largas, siete píldoras formaban cuatro filas irregulares.

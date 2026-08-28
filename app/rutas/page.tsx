@@ -101,7 +101,7 @@ function RoutesContent() {
         reportados. El tiempo y la distancia se muestran siempre: el trade-off no se esconde.
       </p>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[380px_1fr]">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[380px_1fr]">
         <div className="space-y-4">
           <WeatherBanner weather={snapshot?.weather ?? null} scenario={scenario} onScenarioChange={setScenario} />
 

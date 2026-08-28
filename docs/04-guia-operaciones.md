@@ -908,6 +908,12 @@ validación fallida nunca borra lo que la persona escribió (el estado del formu
   En `/` el mapa es lo segundo tras el clima; en `/suscripciones`, lo tercero tras el alcance,
   porque es donde se eligen las zonas. En escritorio vuelve la disposición de dos columnas.
 - **El emoji va dentro de `IconBubble`**: suelto flota con un tamaño óptico distinto al del texto.
+- **`min-w-0` en el `fieldset` del filtro y pistas `minmax(0,1fr)` en las rejillas.** El navegador da
+  a `fieldset` un `min-inline-size: min-content` que no se puede ignorar, y una pista de rejilla
+  `auto` no baja del min-content de sus elementos. Con las píldoras marcadas `shrink-0`, el mínimo
+  del filtro era la suma de todas (~600 px) y **la página entera medía 554 px a cualquier ancho de
+  pantalla**: la franja superior llegaba al borde del viewport y las tarjetas se salían por la
+  derecha. Se detecta buscando elementos con `scrollWidth > clientWidth`, no a ojo.
 
 **Sincronización panel ↔ mapa.** `center` y `zoom` de `MapContainer` son **solo valores iniciales**:
 cambiarlos después no mueve el mapa. Por eso el componente `Recenter` llama a `map.setView()` cuando
