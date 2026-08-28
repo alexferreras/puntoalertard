@@ -29,13 +29,13 @@ export function TopBar() {
         </Link>
 
         {/*
-          En móvil los cinco enlaces no caben en una línea y antes se partían en
-          tres, comiendo 100 px de alto. Un carril con desplazamiento horizontal
-          mantiene la barra en una sola línea a cualquier ancho.
+          Los cinco enlaces no caben en una línea junto a la marca en un móvil:
+          quedaban cortados en el borde derecho, que se lee como un fallo. En
+          móvil la navegación vive en `BottomNav`; aquí aparece desde `sm`.
         */}
         <nav
           aria-label="Secciones"
-          className="-mx-1 flex flex-1 items-center gap-0.5 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="hidden flex-1 items-center gap-0.5 sm:flex"
         >
           {LINKS.map((link) => (
             <Link

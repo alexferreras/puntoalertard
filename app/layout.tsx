@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 
+import { BottomNav } from '@/components/BottomNav'
 import { ConnectionBanner } from '@/components/ConnectionBanner'
 import { TopBar } from '@/components/TopBar'
 
@@ -24,7 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-full flex-col antialiased">
         <ConnectionBanner />
         <TopBar />
-        <main className="flex flex-1 flex-col">{children}</main>
+        {/* `pb-16` reserva el alto de la barra inferior en móvil. */}
+        <main className="flex flex-1 flex-col pb-16 sm:pb-0">{children}</main>
+        <BottomNav />
       </body>
     </html>
   )

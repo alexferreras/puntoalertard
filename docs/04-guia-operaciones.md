@@ -893,6 +893,7 @@ validación fallida nunca borra lo que la persona escribió (el estado del formu
 | `MapLegend.tsx` / `CategoryFilter.tsx` | Leyenda de niveles y categorías; filtro con `aria-pressed`. |
 | `IncidentList.tsx` | **Alternativa textual del mapa** (§22.5): la misma información en botones enfocables, ordenada por riesgo. Un mapa Leaflet no se navega con teclado ni con lector de pantalla. |
 | `ConnectionBanner.tsx` | Estado `offline` (§18) anunciado con `role="status"`: perder la red no es visible para quien usa lector de pantalla. |
+| `BottomNav.tsx` | Navegación inferior en móvil. Las cinco secciones no caben junto a la marca en la barra superior: quedaban cortadas en el borde, y una palabra cortada se lee como un fallo, no como un carril deslizable. Abajo caben las cinco y se alcanzan con el pulgar. Se oculta desde `sm`, donde los enlaces vuelven arriba. |
 | `ui.tsx` | Primitivas compartidas: `Card`, `SegmentedControl`, `IconBubble`, `Stat`. Existen porque cada pantalla repetía su propia combinación de borde, radio y espaciado, y la interfaz se veía distinta en cada sitio sin que nadie lo hubiera decidido. |
 
 **Decisiones de presentación que no son cosmética:**
