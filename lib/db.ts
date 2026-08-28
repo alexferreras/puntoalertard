@@ -24,6 +24,16 @@ import {
 const DATA_DIR = path.join(process.cwd(), 'data')
 const DB_PATH = path.join(DATA_DIR, env.PUNTOALERTA_DB_FILE)
 
+/** Rutas públicas para el paso de migración y los respaldos. */
+export const DATABASE_PATH = DB_PATH
+export const DATABASE_DIR = DATA_DIR
+
+/** Migraciones aplicadas en este proceso, en orden. */
+const applied: string[] = []
+export function appliedMigrations(): readonly string[] {
+  return applied
+}
+
 const CATEGORY_LIST = CATEGORIES.map((c) => `'${c}'`).join(', ')
 const STATUS_LIST = STATUSES.map((s) => `'${s}'`).join(', ')
 
@@ -242,6 +252,51 @@ function migrateColumns(handle: DatabaseHandle): void {
     if (existing.has(column.name)) continue
     console.info(`[db] añadiendo columna ${column.name} a ${column.table}`)
     handle.exec(column.ddl)
+    applied.push(`columna ${column.table}.${column.name}`)
+  }
+}
+
+/**
+ * Qué migraciones haría falta aplicar, mirando el fichero sin abrir la conexión
+ * cacheada. Se usa **antes** de migrar para decidir si hace falta un respaldo:
+ * copiar el fichero con una conexión WAL abierta no es seguro.
+ */
+export function pendingMigrations(): string[] {
+  if (!fs.existsSync(DB_PATH)) return []
+
+  const handle = new Database(DB_PATH, { readonly: true })
+  try {
+    const pendientes: string[] = []
+
+    const tablas = new Set(
+      (handle.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as {
+        name: string
+      }[]).map((t) => t.name),
+    )
+
+    for (const column of ADDED_COLUMNS) {
+      if (!tablas.has(column.table)) continue
+      const columnas = new Set(
+        (handle.prepare(`PRAGMA table_info(${column.table})`).all() as { name: string }[]).map(
+          (c) => c.name,
+        ),
+      )
+      if (!columnas.has(column.name)) pendientes.push(`columna ${column.table}.${column.name}`)
+    }
+
+    if (tablas.has('reports')) {
+      const row = handle
+        .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'reports'")
+        .get() as { sql: string } | undefined
+      const faltantes = [...CATEGORIES, ...STATUSES].filter(
+        (value) => row && !row.sql.includes(`'${value}'`),
+      )
+      if (faltantes.length > 0) pendientes.push(`constraints de reports (${faltantes.join(', ')})`)
+    }
+
+    return pendientes
+  } finally {
+    handle.close()
   }
 }
 
@@ -261,6 +316,7 @@ function migrateEnumConstraints(handle: DatabaseHandle): void {
   if (missing.length === 0) return
 
   console.info(`[db] migrando constraints de reports; valores nuevos: ${missing.join(', ')}`)
+  applied.push(`constraints de reports (${missing.join(', ')})`)
   handle.pragma('foreign_keys = OFF')
   handle.transaction(() => {
     handle.exec(reportsTable('reports_new').replace('IF NOT EXISTS ', ''))

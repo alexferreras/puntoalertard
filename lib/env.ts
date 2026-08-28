@@ -34,6 +34,43 @@ const schema = z
     path: ['ANTHROPIC_API_KEY'],
   })
 
+/** Valor por defecto del código de operador: aceptable en desarrollo, nunca en producción. */
+const DEFAULT_OPERATOR_CODE = 'operador-demo'
+
+/**
+ * `next build` corre con NODE_ENV=production pero sin los secretos del entorno
+ * de ejecución: si las exigencias de producción se aplicaran también al build,
+ * la imagen no se podría construir. Next marca la fase con NEXT_PHASE.
+ */
+function isBuildPhase(): boolean {
+  return (process.env.NEXT_PHASE ?? '').includes('build')
+}
+
+/**
+ * Exigencias que solo aplican al ejecutar en producción. Fallar al arrancar es
+ * deliberado: un despliegue con el código de operador por defecto deja el
+ * dashboard abierto, y sin secreto de sesión las sesiones mueren en cada
+ * reinicio o redespliegue.
+ */
+function assertProductionReady(env: z.infer<typeof schema>): string[] {
+  const problemas: string[] = []
+
+  if (env.PUNTOALERTA_OPERATOR_CODE === DEFAULT_OPERATOR_CODE) {
+    problemas.push(
+      'PUNTOALERTA_OPERATOR_CODE sigue con el valor por defecto: cámbialo antes de desplegar.',
+    )
+  }
+  if (!env.PUNTOALERTA_SESSION_SECRET) {
+    problemas.push(
+      'PUNTOALERTA_SESSION_SECRET es obligatorio en producción: sin él las sesiones y los tokens de suscripción se invalidan en cada reinicio.',
+    )
+  }
+  if (env.PUNTOALERTA_VISION_ENGINE === 'claude' && !env.ANTHROPIC_API_KEY) {
+    problemas.push('PUNTOALERTA_VISION_ENGINE=claude requiere ANTHROPIC_API_KEY.')
+  }
+  return problemas
+}
+
 function load() {
   const parsed = schema.safeParse(process.env)
   if (!parsed.success) {
@@ -42,6 +79,21 @@ function load() {
       .join('\n')
     throw new Error(`Configuración inválida en las variables de entorno:\n${detail}`)
   }
+
+  if (process.env.NODE_ENV === 'production' && !isBuildPhase()) {
+    const problemas = assertProductionReady(parsed.data)
+    if (problemas.length > 0) {
+      throw new Error(
+        `Configuración no apta para producción:\n${problemas.map((p) => `  - ${p}`).join('\n')}`,
+      )
+    }
+    if (parsed.data.DEMO_MODE) {
+      console.warn(
+        '[env] DEMO_MODE=true en producción: los escenarios simulados y el endpoint de seed están habilitados.',
+      )
+    }
+  }
+
   return parsed.data
 }
 

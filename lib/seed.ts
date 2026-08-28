@@ -390,7 +390,14 @@ export function runSeed({ reset = true, now = Date.now() } = {}): Report[] {
 }
 
 /** Siembra solo si la base está vacía: primer arranque y demo a prueba de sustos. */
+/**
+ * Siembra solo si la base está vacía **y** el modo demo está activo: un
+ * despliegue real no debe aparecer con 18 reportes inventados. Las instituciones
+ * sí se registran siempre, porque sin ellas no hay enrutamiento (RF-20).
+ */
 export function ensureSeeded(): void {
+  seedInstitutions()
+  if (!env.DEMO_MODE) return
   if (countReports() === 0) runSeed({ reset: false })
 }
 
